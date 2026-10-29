@@ -2,15 +2,66 @@ name: Build ImmortalWrt
 on:
   workflow_dispatch:
 
+env:
+  REPO_URL: https://github.com/immortalwrt/immortalwrt
+  REPO_BRANCH: openwrt-25.10
+  CONFIG_FILE: .config
+  DIY1_FILE: diy-part1.sh
+  DIY2_FILE: diy-part2.sh
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - name: Build OpenWrt
-        uses: smallprogram/OpenWrtAction@main
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 安装依赖
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential libncurses-dev gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf git
+
+      - name: 拉取源码
+        run: |
+          git clone $REPO_URL -b $REPO_BRANCH openwrt
+          cd openwrt
+
+      - name: 执行 diy-part1.sh
+        run: |
+          cd openwrt
+          chmod +x ../$DIY1_FILE
+          ../$DIY1_FILE
+
+      - name: 拉取feeds
+        run: |
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: 导入配置 .config
+        run: |
+          cd openwrt
+          cp ../$CONFIG_FILE .config
+          make defconfig
+
+      - name: 执行 diy-part2.sh
+        run: |
+          cd openwrt
+          chmod +x ../$DIY2_FILE
+          ../$DIY2_FILE
+
+      - name: 预下载dl资源
+        run: |
+          cd openwrt
+          make download -j8
+
+      - name: 开始编译
+        run: |
+          cd openwrt
+          make -j$(nproc)
+
+      - name: 上传固件产物
+        uses: actions/upload-artifact@v4
         with:
-          repo: immortalwrt/immortalwrt
-          branch: openwrt-25.10
-          x86: true
-          diy_file: diy-part1.sh;diy-part2.sh
-          config_file: .config
+          name: firmware
+          path: openwrt/bin/targets/x86/64/
