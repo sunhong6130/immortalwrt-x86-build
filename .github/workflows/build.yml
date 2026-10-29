@@ -6,14 +6,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@main
-
       - name: Build OpenWrt
-        uses: P3TERX/Actions-OpenWrt@main
+        uses: smallprogram/OpenWrtAction@main
         with:
-          repo: https://github.com/immortalwrt/immortalwrt
+          repo: immortalwrt/immortalwrt
           branch: openwrt-25.10
-          file: .config
-          diy: diy-part1.sh;diy-part2.sh
-
+          x86: true
+          diy_file: diy-part1.sh;diy-part2.sh
+          config_file: .config
