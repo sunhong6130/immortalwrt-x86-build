@@ -9,10 +9,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
 
-      - name: Build ImmortalWrt
-        uses: ophub/amlogic-s9xxx-openwrt@main
+      - name: Build OpenWrt
+        uses: P3TERX/Actions-OpenWrt@main
         with:
-          openwrt_url: https://github.com/immortalwrt/immortalwrt
-          openwrt_branch: openwrt-25.12
-          openwrt_file: .config
-          openwrt_diy: diy-part1.sh;diy-part2.sh
+          repo: https://github.com/immortalwrt/immortalwrt
+          branch: openwrt-25.10
+          file: .config
+          diy: diy-part1.sh;diy-part2.sh
+
