@@ -4,7 +4,7 @@ on:
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
-  REPO_BRANCH: openwrt-25.10
+  REPO_BRANCH: openwrt-25.12
   CONFIG_FILE: .config
   DIY1_FILE: diy-part1.sh
   DIY2_FILE: diy-part2.sh
