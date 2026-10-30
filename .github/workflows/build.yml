@@ -1,10 +1,10 @@
-name: Build ImmortalWrt
+name: Build OpenWrt 25.12.6
 on:
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/immortalwrt/immortalwrt
-  REPO_BRANCH: openwrt-25.12
+  REPO_URL: https://git.openwrt.org/openwrt/openwrt.git
+  REPO_BRANCH: v25.12.6
   CONFIG_FILE: .config
   DIY1_FILE: diy-part1.sh
   DIY2_FILE: diy-part2.sh
@@ -12,16 +12,17 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 360
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 安装依赖
+      - name: 安装编译依赖
         run: |
           sudo apt update
           sudo apt install -y build-essential libncurses-dev gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf git
 
-      - name: 拉取源码
+      - name: 拉取OpenWrt源码 v25.12.6
         run: |
           git clone $REPO_URL -b $REPO_BRANCH openwrt
           cd openwrt
@@ -32,13 +33,13 @@ jobs:
           chmod +x ../$DIY1_FILE
           ../$DIY1_FILE
 
-      - name: 拉取feeds
+      - name: 更新 feeds
         run: |
           cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: 导入配置 .config
+      - name: 导入配置
         run: |
           cd openwrt
           cp ../$CONFIG_FILE .config
@@ -55,13 +56,13 @@ jobs:
           cd openwrt
           make download -j8
 
-      - name: 开始编译
+      - name: 编译固件
         run: |
           cd openwrt
           make -j$(nproc)
 
-      - name: 上传固件产物
+      - name: 上传固件
         uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: openwrt-25.12.6-x86_64
           path: openwrt/bin/targets/x86/64/
