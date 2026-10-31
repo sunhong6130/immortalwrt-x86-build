@@ -1,68 +1,35 @@
 name: Build OpenWrt 25.12.6
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
-
-env:
-  REPO_URL: https://git.openwrt.org/openwrt/openwrt.git
-  REPO_BRANCH: v25.12.6
-  CONFIG_FILE: .config
-  DIY1_FILE: diy-part1.sh
-  DIY2_FILE: diy-part2.sh
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 360
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: 安装编译依赖
+      - name: Prepare env
         run: |
           sudo apt update
-          sudo apt install -y build-essential libncurses-dev gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf git
-
-      - name: 拉取OpenWrt源码 v25.12.6
+          sudo apt install -y build-essential libncurses5-dev gawk git bison flex libssl-dev python3 python3-pip unzip
+      - name: Clone OpenWrt 25.12.6
         run: |
-          git clone $REPO_URL -b $REPO_BRANCH openwrt
+          git clone https://git.openwrt.org/openwrt/openwrt.git openwrt
           cd openwrt
-
-      - name: 执行 diy-part1.sh
-        run: |
-          cd openwrt
-          chmod +x ../$DIY1_FILE
-          ../$DIY1_FILE
-
-      - name: 更新 feeds
+          git checkout v25.12.6
+          cp ../.config ./
+          cp ../diy-part*.sh ./
+          chmod +x diy-part*.sh
+          ./diy-part1.sh
+      - name: Build firmware
         run: |
           cd openwrt
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
-      - name: 导入配置
-        run: |
-          cd openwrt
-          cp ../$CONFIG_FILE .config
-          make defconfig
-
-      - name: 执行 diy-part2.sh
-        run: |
-          cd openwrt
-          chmod +x ../$DIY2_FILE
-          ../$DIY2_FILE
-
-      - name: 预下载dl资源
-        run: |
-          cd openwrt
-          make download -j8
-
-      - name: 编译固件
-        run: |
-          cd openwrt
-          make -j$(nproc)
-
-      - name: 上传固件
+          ./diy-part2.sh
+          make -j$(nproc) V=s
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openwrt-25.12.6-x86_64
+          name: openwrt-x86_64-25.12.6
           path: openwrt/bin/targets/x86/64/
